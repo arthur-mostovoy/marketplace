@@ -1,0 +1,72 @@
+﻿import Link from "next/link";
+
+export default function Home() {
+    return (
+        <div className="space-y-14">
+            {/* Hero */}
+            <section className="rounded-3xl border border-zinc-200 bg-zinc-50 p-8">
+                <span className="inline-flex items-center rounded-full border border-zinc-200 bg-white px-3 py-1 text-xs text-zinc-600">
+                    MVP-маркетплейс • ниша: онлайн-курсы
+                </span>
+
+                <h1 className="mt-4 text-4xl font-bold tracking-tight text-zinc-900 sm:text-5xl">
+                    Запусти курс быстрее с готовым лендингом
+                </h1>
+
+                <p className="mt-4 max-w-2xl text-zinc-600">
+                    Готовые адаптивные шаблоны: чистая структура, понятные блоки, быстрый старт.
+                </p>
+
+                <div className="mt-7 flex flex-col gap-3 sm:flex-row">
+                    <Link
+                        href="/templates"
+                        className="inline-flex items-center justify-center rounded-xl bg-blue-600 px-4 py-2 text-sm font-semibold text-white hover:bg-blue-700"
+                    >
+                        Открыть каталог
+                    </Link>
+
+                    <Link
+                        href="/templates"
+                        className="inline-flex items-center justify-center rounded-xl border border-zinc-200 bg-white px-4 py-2 text-sm font-semibold text-zinc-900 hover:bg-zinc-50"
+                    >
+                        Посмотреть демо →
+                    </Link>
+                </div>
+            </section>
+            {/* Benefits */}
+            <section>
+                <h2 className="text-2xl font-bold tracking-tightrounded-2xl border border-zinc-200 bg-white p-5 shadow-sm hover:shadow-md transition">Почему это удобно</h2>
+                <div className="mt-6 grid gap-5 space-y-16 sm:grid-cols-2 lg:grid-cols-3">
+                    {[
+                        { title: "Быстрый запуск", text: "Структура уже готова — подставляешь контент и публикуешь." },
+                        { title: "Адаптивность", text: "Корректно смотрится на телефоне, планшете и десктопе." },
+                        { title: "Чистый код", text: "Понятная разметка, легко править и расширять." },
+                    ].map((b) => (
+                        <div key={b.title} className="rounded-2xl border border-zinc-200 bg-white p-5 shadow-sm">
+                            <div className="text-base font-semibold text-zinc-900">{b.title}</div>
+                            <div className="mt-2 text-sm text-zinc-600">{b.text}</div>
+                        </div>
+                    ))}
+                </div>
+            </section>
+
+            {/* CTA */}
+            <section className="rounded-3xl border border-zinc-200 bg-white p-7 shadow-sm">
+                <div className="flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between">
+                    <div>
+                        <h3 className="text-xl font-semibold text-zinc-900">Готов начать?</h3>
+                        <p className="mt-1 text-zinc-600">Выбери шаблон и посмотри страницу товара.</p>
+                    </div>
+
+                    <Link
+                        href="/templates"
+                        className="inline-flex items-center justify-center rounded-xl bg-blue-600 px-4 py-2 text-sm font-semibold text-white hover:bg-blue-700"
+                    >
+                        Перейти в каталог
+                    </Link>
+                </div>
+            </section>
+
+        </div>
+    );
+}
