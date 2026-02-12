@@ -4,7 +4,7 @@ import Link from "next/link";
 import { usePathname } from "next/navigation";
 import { useCurrency } from "../context/currency";
 import { useFavorites } from "../hooks/useFavorites";
-import { useState, useEffect } from "react"
+import { useState, useEffect, useRef } from "react"
 import { useRouter } from "next/navigation";
 
 function NavLink({ href, label, badge }: { href: string; label: string; badge?: number }) {
@@ -41,6 +41,7 @@ export default function Header() {
 
     const favoritesCount = favoriteSlugs.length;
 
+    const pathname = usePathname();
     const router = useRouter();
     const [me, setMe] = useState<{ email: string; role: "user" | "admin" } | null>(null);
 
@@ -50,7 +51,23 @@ export default function Header() {
             const data = await res.json().catch(() => ({ user: null }));
             setMe(data.user ?? null);
         })();
-    }, []);
+    }, [pathname]); // обновляться при переходах
+
+const [open, setOpen] = useState(false);
+const menuRef = useRef<HTMLDivElement | null>(null);
+
+useEffect(() => {
+  function onDocClick(e: MouseEvent) {
+    if (!open) return;
+    const target = e.target as Node;
+    if (menuRef.current && !menuRef.current.contains(target)) {
+      setOpen(false);
+    }
+  }
+  document.addEventListener("mousedown", onDocClick);
+  return () => document.removeEventListener("mousedown", onDocClick);
+}, [open]);
+
 
     async function logout() {
         await fetch("/api/auth/logout", { method: "POST" });
@@ -100,20 +117,73 @@ export default function Header() {
                         </span>
                     </button>
                     {/* Блок пользователя */}
-                    <div className="ml-2 flex items-center gap-2">
+                    {/* Профиль */}
+                    <div className="relative ml-2" ref={menuRef}>
                         {me ? (
                             <>
-                                <span className="text-sm text-zinc-700">{me.email}</span>
-                                <NavLink href="/orders" label="Заказы" />
-                                {me.role === "admin" && <NavLink href="/admin/orders" label="Админка" />}
-                                <button className={`${pill} ${pillOff}`} onClick={logout}>
-                                    Выйти
+                                <button
+                                    type="button"
+                                    onClick={() => setOpen(v => !v)}
+                                    className={`inline-flex items-center gap-2 rounded-full border px-3 py-1.5 text-sm font-semibold transition ${pillOff}`}
+                                    aria-haspopup="menu"
+                                    aria-expanded={open}
+                                >
+                                    <span className="grid h-7 w-7 place-items-center rounded-full bg-zinc-900 text-xs font-bold text-white">
+                                        {(me.name?.[0] ?? me.email?.[0] ?? "U").toUpperCase()}
+                                    </span>
+                                    <span className="max-w-[140px] truncate">
+                                        {me.name ? me.name : me.email}
+                                    </span>
+                                    <span className="text-zinc-400">▾</span>
                                 </button>
+
+                                {open && (
+                                    <div className="absolute right-0 mt-2 w-56 rounded-xl border bg-white shadow-lg">
+                                        <div className="px-4 py-3">
+                                            <div className="text-sm font-semibold text-zinc-900">
+                                                {me.name ?? "Пользователь"}
+                                            </div>
+                                            <div className="text-xs text-zinc-500 truncate">{me.email}</div>
+                                        </div>
+
+                                        <div className="border-t" />
+
+                                        <div className="p-2">
+                                            <Link
+                                                href="/orders"
+                                                className="block rounded-lg px-3 py-2 text-sm hover:bg-zinc-100"
+                                                onClick={() => setOpen(false)}
+                                            >
+                                                Мои заказы
+                                            </Link>
+
+                                            {me.role === "admin" && (
+                                                <Link
+                                                    href="/admin/orders"
+                                                    className="block rounded-lg px-3 py-2 text-sm hover:bg-zinc-100"
+                                                    onClick={() => setOpen(false)}
+                                                >
+                                                    Админка
+                                                </Link>
+                                            )}
+
+                                            <button
+                                                onClick={async () => {
+                                                    setOpen(false);
+                                                    await logout();
+                                                }}
+                                                className="mt-1 w-full rounded-lg px-3 py-2 text-left text-sm hover:bg-zinc-100"
+                                            >
+                                                Выйти
+                                            </button>
+                                        </div>
+                                    </div>
+                                )}
                             </>
                         ) : (
                             <NavLink href="/login" label="Войти" />
                         )}
-                    </div>
+                    </div>        
                 </nav>
             </div>
         </header>
