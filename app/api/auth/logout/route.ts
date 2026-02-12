@@ -2,6 +2,7 @@
 import { clearSessionCookie } from "../../../lib/session";
 
 export async function POST() {
-    clearSessionCookie();
-    return NextResponse.json({ ok: true });
+    const res = NextResponse.json({ ok: true });
+    clearSessionCookie(res);
+    return res;
 }

@@ -24,7 +24,7 @@ export type SessionPayload = {
     exp: number; // unix seconds
 };
 
-export async function createSessionCookie(payload: Omit<SessionPayload, "exp">, days = 7) {
+export function createSessionCookie(payload: Omit<SessionPayload, "exp">, days = 7) {
     const secret = process.env.SESSION_SECRET;
     if (!secret) throw new Error("SESSION_SECRET is not set");
 
@@ -35,13 +35,15 @@ export async function createSessionCookie(payload: Omit<SessionPayload, "exp">, 
     const sig = sign(body, secret);
     const token = `${body}.${sig}`;
 
+    return { token, exp };
+    /*
     const jar = await cookies();
     jar.set(COOKIE_NAME, token, {
         httpOnly: true,
         sameSite: "lax",
         secure: process.env.NODE_ENV === "production",
         path: "/",
-    });
+    });*/
 }
 
 export function setSessionCookieOnResponse(
@@ -49,15 +51,7 @@ export function setSessionCookieOnResponse(
     payload: Omit<SessionPayload, "exp">,
     days = 7
 ) {
-    const secret = process.env.SESSION_SECRET;
-    if (!secret) throw new Error("SESSION_SECRET is not set");
-
-    const exp = Math.floor(Date.now() / 1000) + days * 24 * 60 * 60;
-    const full: SessionPayload = { ...payload, exp };
-
-    const body = base64url(JSON.stringify(full));
-    const sig = sign(body, secret);
-    const token = `${body}.${sig}`;
+const { token, exp } = createSessionCookie(payload, days);
 
     res.cookies.set(COOKIE_NAME, token, {
         httpOnly: true,
@@ -68,12 +62,18 @@ export function setSessionCookieOnResponse(
     });
 }
 
-export async function clearSessionCookie() {
-    const clear = await cookies();
-    clear.set(COOKIE_NAME, "", { httpOnly: true, path: "/", maxAge: 0 });
+export function clearSessionCookie(res: NextResponse) {
+    res.cookies.set(COOKIE_NAME, "", {
+        httpOnly: true,
+        sameSite: "lax",
+        secure: process.env.NODE_ENV === "production",
+        path    : "/",
+        expires : new Date(0),
+    });
+
 }
 
-export async function getSession(): SessionPayload | null {
+export async function getSession(): Promise<SessionPayload | null> {
     const cookieStore = await cookies();
     const token = cookieStore.get(COOKIE_NAME)?.value;
     if (!token) return null;

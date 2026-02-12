@@ -2,7 +2,7 @@
 import { getUserByEmail } from "../../../lib/usersRepo";
 //import { hashPassword } from "../../../lib/password";
 import { verifyPassword } from "../../../lib/password";
-import { createSessionCookie } from "../../../lib/session";
+import { setSessionCookieOnResponse } from "../../../lib/session";
 
 export async function POST(req: Request) {
     const body = await req.json().catch(() => null);
@@ -28,6 +28,7 @@ export async function POST(req: Request) {
         return NextResponse.json({ error: "Invalid credentials" }, { status: 401 });
     }
 
-    await createSessionCookie({ userId: user.id, role: user.role });
-    return NextResponse.json({ ok: true, role: user.role });
+    const res = NextResponse.json({ ok: true, role: user.role });
+    setSessionCookieOnResponse(res, { userId: user.id, role: user.role });
+    return res;
 }
