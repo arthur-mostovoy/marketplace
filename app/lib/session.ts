@@ -1,6 +1,7 @@
 ﻿import crypto from "crypto";
 import { cookies } from "next/headers";
 import type { Role } from "./types";
+import type { NextResponse } from "next/server";
 
 const COOKIE_NAME = "session";
 
@@ -23,7 +24,7 @@ export type SessionPayload = {
     exp: number; // unix seconds
 };
 
-export function createSessionCookie(payload: Omit<SessionPayload, "exp">, days = 7) {
+export async function createSessionCookie(payload: Omit<SessionPayload, "exp">, days = 7) {
     const secret = process.env.SESSION_SECRET;
     if (!secret) throw new Error("SESSION_SECRET is not set");
 
@@ -34,7 +35,8 @@ export function createSessionCookie(payload: Omit<SessionPayload, "exp">, days =
     const sig = sign(body, secret);
     const token = `${body}.${sig}`;
 
-    cookies().set(COOKIE_NAME, token, {
+    const jar = await cookies();
+    jar.set(COOKIE_NAME, token, {
         httpOnly: true,
         sameSite: "lax",
         secure: process.env.NODE_ENV === "production",
@@ -42,8 +44,33 @@ export function createSessionCookie(payload: Omit<SessionPayload, "exp">, days =
     });
 }
 
-export function clearSessionCookie() {
-    cookies().set(COOKIE_NAME, "", { httpOnly: true, path: "/", maxAge: 0 });
+export function setSessionCookieOnResponse(
+    res: NextResponse,
+    payload: Omit<SessionPayload, "exp">,
+    days = 7
+) {
+    const secret = process.env.SESSION_SECRET;
+    if (!secret) throw new Error("SESSION_SECRET is not set");
+
+    const exp = Math.floor(Date.now() / 1000) + days * 24 * 60 * 60;
+    const full: SessionPayload = { ...payload, exp };
+
+    const body = base64url(JSON.stringify(full));
+    const sig = sign(body, secret);
+    const token = `${body}.${sig}`;
+
+    res.cookies.set(COOKIE_NAME, token, {
+        httpOnly: true,
+        sameSite: "lax",
+        secure: process.env.NODE_ENV === "production",
+        path: "/",
+        expires: new Date(exp * 1000),
+    });
+}
+
+export async function clearSessionCookie() {
+    const clear = await cookies();
+    clear.set(COOKIE_NAME, "", { httpOnly: true, path: "/", maxAge: 0 });
 }
 
 export async function getSession(): SessionPayload | null {
