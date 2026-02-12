@@ -1,6 +1,7 @@
 ﻿import { NextResponse } from "next/server";
 import { getUserByEmail } from "../../../lib/usersRepo";
-import { hashPassword } from "../../../lib/password";
+//import { hashPassword } from "../../../lib/password";
+import { verifyPassword } from "../../../lib/password";
 import { createSessionCookie } from "../../../lib/session";
 
 export async function POST(req: Request) {
@@ -16,12 +17,17 @@ export async function POST(req: Request) {
     if (!user) {
         return NextResponse.json({ error: "Invalid credentials" }, { status: 401 });
     }
-
+    /*
     const passHash = hashPassword(password);
     if (user.passwordHash !== passHash) {
         return NextResponse.json({ error: "Invalid credentials" }, { status: 401 });
     }
+    */
+    const ok = await verifyPassword(password, user.passwordHash);
+    if (!ok) {
+        return NextResponse.json({ error: "Invalid credentials" }, { status: 401 });
+    }
 
-    createSessionCookie({ userId: user.id, role: user.role });
+    await createSessionCookie({ userId: user.id, role: user.role });
     return NextResponse.json({ ok: true, role: user.role });
 }

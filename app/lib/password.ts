@@ -1,7 +1,14 @@
-﻿import crypto from "crypto";
+﻿import bcrypt from "bcrypt";
 
-export function hashPassword(password: string) {
-    const salt = process.env.PASSWORD_SALT;
-    if (!salt) throw new Error("PASSWORD_SALT is not set");
-    return crypto.createHash("sha256").update(password + salt).digest("hex");
+const SALT_ROUNDS = 10;
+
+export async function hashPassword(password: string): Promise<string> {
+    return bcrypt.hash(password, SALT_ROUNDS);
+}
+
+export async function verifyPassword(
+    password: string,
+    passwordHash: string
+): Promise<boolean> {
+    return bcrypt.compare(password, passwordHash);
 }
