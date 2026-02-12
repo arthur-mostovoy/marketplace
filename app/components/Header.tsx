@@ -4,6 +4,8 @@ import Link from "next/link";
 import { usePathname } from "next/navigation";
 import { useCurrency } from "../context/currency";
 import { useFavorites } from "../hooks/useFavorites";
+import { useState, useEffect } from "react"
+import { useRouter } from "next/navigation";
 
 function NavLink({ href, label, badge }: { href: string; label: string; badge?: number }) {
     const pathname = usePathname();
@@ -38,6 +40,24 @@ export default function Header() {
     const { favoriteSlugs } = useFavorites();
 
     const favoritesCount = favoriteSlugs.length;
+
+    const router = useRouter();
+    const [me, setMe] = useState<{ email: string; role: "user" | "admin" } | null>(null);
+
+    useEffect(() => {
+        (async () => {
+            const res = await fetch("/api/auth/me", { cache: "no-store" });
+            const data = await res.json().catch(() => ({ user: null }));
+            setMe(data.user ?? null);
+        })();
+    }, []);
+
+    async function logout() {
+        await fetch("/api/auth/logout", { method: "POST" });
+        setMe(null);
+        router.push("/login");
+        router.refresh();
+    }
 
     const pill =
         "inline-flex items-center justify-center rounded-full border px-3 py-1.5 text-sm font-semibold transition";
@@ -79,6 +99,21 @@ export default function Header() {
                             </span>
                         </span>
                     </button>
+                    {/* Блок пользователя */}
+                    <div className="ml-2 flex items-center gap-2">
+                        {me ? (
+                            <>
+                                <span className="text-sm text-zinc-700">{me.email}</span>
+                                <NavLink href="/orders" label="Заказы" />
+                                {me.role === "admin" && <NavLink href="/admin/orders" label="Админка" />}
+                                <button className={`${pill} ${pillOff}`} onClick={logout}>
+                                    Выйти
+                                </button>
+                            </>
+                        ) : (
+                            <NavLink href="/login" label="Войти" />
+                        )}
+                    </div>
                 </nav>
             </div>
         </header>
