@@ -12,6 +12,6 @@ export async function GET() {
     const user = users.find(u => u.id === session.userId) ?? null;
 
     return NextResponse.json({
-        user: user ? { id: user.id, email: user.email, role: user.role } : null,
+        user: user ? { id: user.id, email: user.email, role: user.role, name: user.name ?? null } : null,
     });
 }

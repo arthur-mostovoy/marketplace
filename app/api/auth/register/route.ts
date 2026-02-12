@@ -8,6 +8,7 @@ import { getUserByEmail, readUsers, writeUsers } from "@/app/lib/usersRepo";
 import type { User } from "@/app/lib/types";
 
 const RegisterSchema = z.object({
+    name: z.string().min(2, "Имя минимум 2 символа").max(50, "Имя слишком длинное"),
     email: z.string().email(),
     password: z.string().min(10, "Пароль минимум 10 символов"),
 });
@@ -15,7 +16,7 @@ const RegisterSchema = z.object({
 export async function POST(req: Request) {
     try {
         const body = await req.json();
-        const { email, password } = RegisterSchema.parse(body);
+        const { name, email, password } = RegisterSchema.parse(body);
         const normalizedEmail = email.trim().toLowerCase();
 
         const existing = await getUserByEmail(normalizedEmail);
@@ -25,11 +26,14 @@ export async function POST(req: Request) {
 
         const passwordHash = await hashPassword(password);
 
+        const normalizedName = name.trim();
+
         // важно: по умолчанию роль user
         const users = await readUsers();
 
         const user: User = {
             id: `u_${Date.now()}`,
+            name: normalizedName,
             email: normalizedEmail,
             passwordHash,
             role: "user",
